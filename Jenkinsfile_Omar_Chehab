@@ -3,47 +3,36 @@ pipeline {
 
     environment {
         VIRTUAL_ENV = 'venv'
-        PYTHON = "${env.WORKSPACE}/${VIRTUAL_ENV}/bin/python"
-        PIP = "${env.WORKSPACE}/${VIRTUAL_ENV}/bin/pip"
+        PYTHON = '%VIRTUAL_ENV%\\Scripts\\python.exe'
+        PIP = '%VIRTUAL_ENV%\\Scripts\\pip.exe'
     }
 
     stages {
         stage('Setup') {
             steps {
-                script {
-                    
-                    if (!fileExists("${env.WORKSPACE}/${VIRTUAL_ENV}")) {
-                        sh "python3 -m venv ${VIRTUAL_ENV}"
-                    }
-                    sh "source ${VIRTUAL_ENV}/bin/activate && ${PIP} install --upgrade pip && ${PIP} install -r requirements.txt"
-                }
+                bat "py -m venv %VIRTUAL_ENV%"
+                bat "%PIP% install --upgrade pip"
+                bat "%PIP% install -r requirements.txt"
             }
         }
 
         stage('Lint') {
             steps {
-                script {
-                    sh "source ${VIRTUAL_ENV}/bin/activate && flake8 app.py || true"
-                    
-                }
+                // Don't fail the build on lint warnings
+                bat "%PYTHON% -m flake8 app.py || exit 0"
             }
         }
 
         stage('Test') {
             steps {
-                script {
-                    sh "source ${VIRTUAL_ENV}/bin/activate && pytest -q"
-                }
+                bat "%PYTHON% -m pytest -q"
             }
         }
 
         stage('Coverage') {
             steps {
-                script {
-                    
-                    sh "source ${VIRTUAL_ENV}/bin/activate && coverage run -m pytest && coverage xml -o coverage.xml || true"
-                    
-                }
+                bat "%PYTHON% -m coverage run -m pytest"
+                bat "%PYTHON% -m coverage xml -o coverage.xml"
             }
             post {
                 always {
@@ -54,10 +43,7 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                script {
-                    
-                    sh "source ${VIRTUAL_ENV}/bin/activate && bandit -r . -f xml -o bandit.xml || true"
-                }
+                bat "%PYTHON% -m bandit -r . -f xml -o bandit.xml || exit 0"
             }
             post {
                 always {
@@ -68,13 +54,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                script {
-                    
-                    
-                    echo "Deploying application..."
-                    
-                    sh "bash deploy.sh || echo 'deploy step skipped or failed'"
-                }
+                bat "call deploy.bat || echo 'deploy skipped'"
             }
         }
     }
