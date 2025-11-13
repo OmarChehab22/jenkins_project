@@ -3,36 +3,34 @@ pipeline {
 
     environment {
         VIRTUAL_ENV = 'venv'
-        PYTHON = '%VIRTUAL_ENV%\\Scripts\\python.exe'
-        PIP = '%VIRTUAL_ENV%\\Scripts\\pip.exe'
+        PYTHON = 'C:\\Users\\Ab03meir\\AppData\\Local\\Programs\\Python\\Launcher\\py.exe'
     }
 
     stages {
         stage('Setup') {
             steps {
-                bat "py -m venv %VIRTUAL_ENV%"
-                bat "%PIP% install --upgrade pip"
-                bat "%PIP% install -r requirements.txt"
+                bat "%PYTHON% -m venv %VIRTUAL_ENV%"
+                bat "%VIRTUAL_ENV%\\Scripts\\python -m pip install --upgrade pip"
+                bat "%VIRTUAL_ENV%\\Scripts\\python -m pip install -r requirements.txt"
             }
         }
 
         stage('Lint') {
             steps {
-                // Don't fail the build on lint warnings
-                bat "%PYTHON% -m flake8 app.py || exit 0"
+                bat "%VIRTUAL_ENV%\\Scripts\\python -m flake8 app.py || exit 0"
             }
         }
 
         stage('Test') {
             steps {
-                bat "%PYTHON% -m pytest -q"
+                bat "%VIRTUAL_ENV%\\Scripts\\python -m pytest -q"
             }
         }
 
         stage('Coverage') {
             steps {
-                bat "%PYTHON% -m coverage run -m pytest"
-                bat "%PYTHON% -m coverage xml -o coverage.xml"
+                bat "%VIRTUAL_ENV%\\Scripts\\python -m coverage run -m pytest"
+                bat "%VIRTUAL_ENV%\\Scripts\\python -m coverage xml -o coverage.xml"
             }
             post {
                 always {
@@ -43,7 +41,7 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                bat "%PYTHON% -m bandit -r . -f xml -o bandit.xml || exit 0"
+                bat "%VIRTUAL_ENV%\\Scripts\\python -m bandit -r . -f xml -o bandit.xml || exit 0"
             }
             post {
                 always {
